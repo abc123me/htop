@@ -24,7 +24,8 @@ BatteryMeter.c Process.c ProcessList.c RichString.c ScreenManager.c Settings.c \
 SignalsPanel.c StringUtils.c SwapMeter.c TasksMeter.c UptimeMeter.c \
 TraceScreen.c UsersTable.c Vector.c AvailableColumnsPanel.c AffinityPanel.c \
 HostnameMeter.c OpenFilesScreen.c Affinity.c IncSet.c Action.c EnvScreen.c \
-InfoScreen.c XAlloc.c
+InfoScreen.c XAlloc.c \
+FrequencyMeter.c 
 
 myhtopheaders = AvailableColumnsPanel.h AvailableMetersPanel.h \
 CategoriesPanel.h CheckItem.h ClockMeter.h ColorsPanel.h ColumnsPanel.h \
@@ -34,7 +35,8 @@ BatteryMeter.h Meter.h MetersPanel.h Object.h Panel.h ProcessList.h RichString.h
 ScreenManager.h Settings.h SignalsPanel.h StringUtils.h SwapMeter.h \
 TasksMeter.h UptimeMeter.h TraceScreen.h UsersTable.h Vector.h Process.h \
 AffinityPanel.h HostnameMeter.h OpenFilesScreen.h Affinity.h IncSet.h Action.h \
-EnvScreen.h InfoScreen.h XAlloc.h
+EnvScreen.h InfoScreen.h XAlloc.h \
+FrequencyMeter.h
 
 all_platform_headers =
 
@@ -48,14 +50,22 @@ linux_platform_headers = \
 	linux/LinuxProcess.h \
 	linux/LinuxProcessList.h \
 	linux/LinuxCRT.h \
-	linux/Battery.h
+	linux/Battery.h \
+	linux/ProcCPUInfo.h
 
 all_platform_headers += $(linux_platform_headers)
 
 if HTOP_LINUX
 AM_CFLAGS += -rdynamic
-myhtopplatsources = linux/Platform.c linux/IOPriorityPanel.c linux/IOPriority.c \
-linux/LinuxProcess.c linux/LinuxProcessList.c linux/LinuxCRT.c linux/Battery.c
+myhtopplatsources = \
+	linux/Platform.c \
+	linux/IOPriorityPanel.c \
+	linux/IOPriority.c \
+	linux/LinuxProcess.c \
+	linux/LinuxProcessList.c \
+	linux/LinuxCRT.c \
+	linux/Battery.c \
+	linux/ProcCPUInfo.c
 
 myhtopplatheaders = $(linux_platform_headers)
 endif
