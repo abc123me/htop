@@ -9,9 +9,64 @@
 #define NULL_STR "(null)"
 
 /*{
-#include "stdi.h"
+#include "stdio.h"
 #include "stdint.h"
 }*/
+
+static inline uint8_t whitespace(char c) {
+	return c < '!' || c > '~';
+}
+
+static char* strtrim(char* str) {
+	while(whitespace(*str)) str++;
+	size_t len = strlen(str);
+	if(len <= 1) return str;
+	char* end = str + len;
+	while(whitespace(*(--end)));
+	*(++end) = NULL;
+	return str;
+}
+
+static void seperate_kv_pair(char** key_ptr, char** val_ptr, char* line, uint32_t len) {
+	*key_ptr = NULL;
+	*val_ptr = NULL;
+	for(uint32_t i = 0; i < len; i++){
+		if(line[i] == ':'){
+			line[i] = NULL;
+			*key_ptr = strtrim(line);
+			uint32_t offset = i + 1;
+			if(offset < len) 
+				*val_ptr = strtrim(line + offset);
+			break;
+		}
+	}
+}
+
+static void handle_core_pair(struct CoreInfo* info, char* key, char* value) {
+	if(strcmp("core id", key) == 0)
+		info->physical_id = atoi(value);
+	else if(strcmp("cpu MHz", key) == 0)
+		info->freq_mhz = atof(value);
+}
+
+static char* duplicate_str(char* str) {
+	char* tmp = malloc(strlen(str));
+	strcpy(tmp, str);
+	return tmp;
+}
+
+static uint8_t handle_cpu_pair(struct CPUInfo* info, char* key, char* value) {
+	if(strcmp("model name", key) == 0)
+		CPUInfo_setModel(info, value);
+	else if(strcmp("vendor_id", key) == 0)
+		CPUInfo_setVendor(info, value);
+	else if(strcmp("cpu cores") == 0)
+		info->physical_cores = atoi(value);
+	else if(strcmp("cache size", key) == 0) 
+		info->cache_kb = atoi(value);
+	else return 1;
+	return 0;
+}
 
 /*{
 struct CoreInfo {
@@ -31,9 +86,6 @@ void CoreInfo_init(struct CoreInfo* info) {
 	info->freq_mhz = -1;
 	info->physical_id = 0;
 	info->logical_id = 0;
-}
-inline void CoreInfo_destroy(struct CoreInfo* info) {
-	free(info);
 }
 
 /*{
@@ -72,7 +124,7 @@ struct CPUInfo* CPUInfo_create() {
 	uint16_t cilen = sizeof(struct CoreInfo);
 	info->coreInfo = (struct CoreInfo*) malloc(cilen * cores);
 	for(uint16_t core = 0; core < cores; core++){
-		struct CoreInfo* c_info = &info->coreInfo[core];
+		struct CoreInfo* c_info = &(info->coreInfo[core]);
 		CoreInfo_init(c_info);
 		c_info->logical_id = core;
 	}
@@ -80,22 +132,39 @@ struct CPUInfo* CPUInfo_create() {
 	info->cache_kb = 0;
 	info->model = NULL;
 	info->vendor = NULL;
+	return info;
 }
 void CPUInfo_destroy(struct CPUInfo* info) {
-	CoreInfo_destroy(info->coreInfo);
-	if(info->vendor) free(info->vendor);
-	if(info->model) free(info->model);
+	if(!info){
+		puts("CPUInfo is null, attempt to free() null");
+		exit(-1);
+	}
+	if(info->coreInfo)
+		free(info->coreInfo);
+	if(info->vendor)
+		free(info->vendor);
+	if(info->model)
+		free(info->model);
 	free(info);
 }
-void CPUInfo_setModel(struct CPUInfo* info, char* model){
+void CPUInfo_setModel(struct CPUInfo* info, char* model) {
 	if(info->model) free(info->model);
 	info->model = duplicate_str(model);
 }
-void CPUInfo_setVendor(struct CPUInfo* info, char* vendor){
+void CPUInfo_setVendor(struct CPUInfo* info, char* vendor) {
 	if(info->vendor) free(info->vendor);
 	info->vendor = duplicate_str(vendor);
 }
-void CPUInfo_readProcFile(FILE* cpuinfo, struct CPUInfo* info) {
+float CPUInfo_getAverageFrequencyMHz(struct CPUInfo* info) {
+	float freq = 0;
+	for(uint16_t i = 0; i < info->logical_cores; i++)
+		freq += (&info->coreInfo[i])->freq_mhz;
+	freq /= info->logical_cores;
+	return freq;
+}
+uint8_t CPUInfo_readProcFile(struct CPUInfo* info, FILE* cpuinfo) {
+	if(!cpuinfo || !info)
+		return 0;
 	// Buffer is 8K so that if the CPU has tons of flags
 	// then the buffer will be plenty big enough to hold the line
 	uint32_t buflen = 8192, bufsize = buflen * sizeof(char);
@@ -127,54 +196,5 @@ void CPUInfo_readProcFile(FILE* cpuinfo, struct CPUInfo* info) {
 	}
 	free(cur_line);
 	free(buf);
-}
-
-uint8_t whitespace(char c) {
-	return c < '!' || c > '~';
-}
-char* strtrim(char* str) {
-	while(whitespace(*str)) str++;
-	size_t len = strlen(str);
-	if(len <= 1) return str;
-	char* end = str + len;
-	while(whitespace(*(--end)));
-	*(++end) = NULL;
-	return str;
-}
-void seperate_kv_pair(char** key_ptr, char** val_ptr, char* line, uint32_t len) {
-	*key_ptr = NULL;
-	*val_ptr = NULL;
-	for(uint32_t i = 0; i < len; i++){
-		if(line[i] == ':'){
-			line[i] = NULL;
-			*key_ptr = strtrim(line);
-			uint32_t offset = i + 1;
-			if(offset < len) 
-				*val_ptr = strtrim(line + offset);
-			break;
-		}
-	}
-}
-void handle_core_pair(struct CoreInfo* info, char* key, char* value) {
-	if(strcmp("core id", key) == 0)
-		info->physical_id = atoi(value);
-	else if(strcmp("cpu MHz", key) == 0)
-		info->freq_mhz = atof(value);
-}
-char* duplicate_str(char* str) {
-	char* tmp = malloc(strlen(str));
-	strcpy(tmp, str);
-	return tmp;
-}
-uint8_t handle_cpu_pair(struct CPUInfo* info, char* key, char* value) {
-	if(strcmp("model name", key) == 0)
-		CPUInfo_setModel(info, value);
-	else if(strcmp("vendor_id", key) == 0)
-		CPUInfo_setVendor(info, value);
-	else if(strcmp("cpu cores") == 0)
-		info->physical_cores = atoi(value);
-	else if(strcmp("cache size", key) == 0) 
-		info->cache_kb = atoi(value);
-	else return 1;
-	return 0;
+	return 1;
 }

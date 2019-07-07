@@ -3,8 +3,9 @@
 #ifndef HEADER_ProcCPUInfo
 #define HEADER_ProcCPUInfo
 
-#define IS_WHITESPACE(c) (c < '!' || c > '~')
+#define NULL_STR "(null)"
 
+#include "stdio.h"
 #include "stdint.h"
 
 struct CoreInfo {
@@ -14,7 +15,6 @@ struct CoreInfo {
 };
 void CoreInfo_print(struct CoreInfo* core);
 void CoreInfo_init(struct CoreInfo* info);
-extern void CoreInfo_destroy(struct CoreInfo* info);
 
 struct CPUInfo {
 	uint16_t logical_cores;
@@ -28,12 +28,9 @@ struct CPUInfo {
 void CPUInfo_print(struct CPUInfo* cpu);
 struct CPUInfo* CPUInfo_create();
 void CPUInfo_destroy(struct CPUInfo* info);
-void CPUInfo_readProcFile(FILE* cpuinfo, struct CPUInfo* info);
-
-char* strtrim(char* str);
-void seperate_kv_pair(char** key_ptr, char** val_ptr, char* line, uint32_t len);
-void handle_core_pair(struct CoreInfo* info, char* key, char* value);
-char* duplicate_str(char* str);
-uint8_t handle_cpu_pair(struct CPUInfo* info, char* key, char* value);
+void CPUInfo_setModel(struct CPUInfo* info, char* model);
+void CPUInfo_setVendor(struct CPUInfo* info, char* vendor);
+float CPUInfo_getAverageFrequencyMHz(struct CPUInfo* info);
+uint8_t CPUInfo_readProcFile(struct CPUInfo* info, FILE* cpuinfo);
 
 #endif
