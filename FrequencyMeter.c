@@ -25,12 +25,6 @@ int CPUFrequencyMeter_attributes[] = {
 
 struct CPUInfo* cpu_info = NULL;
 
-static void CPUFrequencyMeter_init(Meter* this) {
-	display_mhz = 0.0f;
-	max_mhz = -1.0f;
-	return;
-}
-
 static void CPUFrequencyMeter_done(Meter* this) {
 	if(cpu_info){
 		CPUInfo_destroy(cpu_info);
@@ -61,7 +55,6 @@ MeterClass CPUFrequencyMeter_class = {
 	.defaultMode = TEXT_METERMODE,
 	.attributes = CPUFrequencyMeter_attributes,
 	.updateValues = CPUFrequencyMeter_updateValues,
-	.init = CPUFrequencyMeter_init,
 	.done = CPUFrequencyMeter_done,
 	.maxItems = 1,
 	.total = 0.0,
