@@ -5,6 +5,8 @@
 #include "unistd.h"
 #include "sys/sysinfo.h"
 
+#include "XAlloc.h"
+
 #include "ProcCPUInfo.h"
 
 #define PROC_FS_CPUINFO "/proc/cpuinfo"
@@ -124,8 +126,8 @@ void CPUInfo_print(struct CPUInfo* cpu) {
 }
 struct CPUInfo* CPUInfo_create() {
 	uint16_t cores = get_nprocs_conf();
-	struct CPUInfo* info = (struct CPUInfo*) malloc(sizeof(struct CPUInfo));
-	info->coreInfo = (struct CoreInfo*) malloc(sizeof(struct CoreInfo) * cores);
+	struct CPUInfo* info = (struct CPUInfo*) xMalloc(sizeof(struct CPUInfo));
+	info->coreInfo = (struct CoreInfo*) xMalloc(sizeof(struct CoreInfo) * cores);
 	info->logical_cores = cores;
 	info->physical_cores = 0;
 	for(uint16_t core = 0; core < cores; core++){
