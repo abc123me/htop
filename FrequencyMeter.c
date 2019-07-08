@@ -29,7 +29,8 @@ static void CPUFrequencyMeter_init(Meter* this) {
 		puts("CPUInfo already declared?!");
 		exit(-1);
 	}
-	cpu_info = CPUInfo_create();
+	if(!cpu_info)
+		cpu_info = CPUInfo_create();
 }
 
 static void CPUFrequencyMeter_done(Meter* this) {
@@ -40,19 +41,11 @@ static void CPUFrequencyMeter_done(Meter* this) {
 }
 
 static void CPUFrequencyMeter_updateValues(Meter* this, char *buffer, int len) {
-	FILE* proc_cpuinfo = fopen("/proc/cpuinfo", "r");
-	if(!proc_cpuinfo){
-		puts("Failed to open /proc/cpuinfo!");
-		exit(1);
-	}
-	if(CPUInfo_readProcFile(cpu_info, proc_cpuinfo)){
+	uint8_t res = CPUInfo_readProcfs(cpu_info);
+	if(!res){
 		float avg = CPUInfo_getAverageFrequencyMHz(cpu_info);
 		xSnprintf(buffer, len - 1, "%.1f", avg);
-	} else if(!cpu_info) xSnprintf(buffer, len - 1, "No CPUInfo");
-	else if(!proc_cpuinfo) xSnprintf(buffer, len - 1, "No file desc.");
-	if(proc_cpuinfo)
-		fclose(proc_cpuinfo);
-	return;
+	} else xSnprintf(buffer, len - 1, "Error: %i", res);
 }
 
 MeterClass CPUFrequencyMeter_class = {
