@@ -33,6 +33,7 @@ static void CPUFrequencyMeter_done(Meter* this) {
 }
 
 static void CPUFrequencyMeter_updateValues(Meter* this, char* buf, int len) {
+	int mode = this->mode;
 	if(!cpu_info)
 		cpu_info = CPUInfo_create();
 	
@@ -43,8 +44,13 @@ static void CPUFrequencyMeter_updateValues(Meter* this, char* buf, int len) {
 	if(mhz > this->total)
 		this->total = mhz;
 	this->values[0] = mhz;
-		
-	xSnprintf(buf, len - 1, "%.1f", mhz);
+	
+	if(mode == GRAPH_METERMODE)
+		return; // Skip it
+	else if(mode == LED_METERMODE)
+		xSnprintf(buf, len - 1, "%.1f", mhz);
+	else 
+		xSnprintf(buf, len - 1, "%.1f/%.1f MHz", mhz, this->total);
 }
 
 MeterClass CPUFrequencyMeter_class = {
