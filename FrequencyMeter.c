@@ -19,18 +19,16 @@ This meter written by Jeremiah B. Lowe
 #include "stdio.h"
 
 int CPUFrequencyMeter_attributes[] = {
-	DEFAULT_COLOR
+	CPU_FREQ
 };
 
 struct CPUInfo* cpu_info = NULL;
+float display_mhz, max_mhz;
 
 static void CPUFrequencyMeter_init(Meter* this) {
-	if(cpu_info){
-		puts("CPUInfo already declared?!");
-		exit(-1);
-	}
-	if(!cpu_info)
-		cpu_info = CPUInfo_create();
+	display_mhz = 0.0f;
+	max_mhz = -1.0f;
+	return;
 }
 
 static void CPUFrequencyMeter_done(Meter* this) {
@@ -40,12 +38,40 @@ static void CPUFrequencyMeter_done(Meter* this) {
 	}
 }
 
-static void CPUFrequencyMeter_updateValues(Meter* this, char *buffer, int len) {
+static void CPUFrequencyMeter_updateValues(Meter* this, char* buf, int len) {
+	if(!cpu_info)
+		cpu_info = CPUInfo_create();
+	
 	uint8_t res = CPUInfo_readProcfs(cpu_info);
-	if(!res){
-		float avg = CPUInfo_getAverageFrequencyMHz(cpu_info);
-		xSnprintf(buffer, len - 1, "%.1f", avg);
-	} else xSnprintf(buffer, len - 1, "Error: %i", res);
+	if(res == 0) display_mhz = CPUInfo_getAverageFrequencyMHz(cpu_info);
+	else display_mhz = -1;
+	if(display_mhz > max_mhz){
+		max_mhz = display_mhz;
+		this->total = (double) max_mhz;
+	}
+		
+	xSnprintf(buf, len - 1, "%.1f", display_mhz);
+}
+
+static void CPUFrequencyMeter_draw(Meter* this, int x, int y, int w){
+	int mode = this->mode;
+	//xSnprintf(buffer, w - 1, "%.1f", display_mhz);
+}
+
+static void CPUFrequencyMeter_updateMode(Meter* this, int mode){
+	switch(mode){
+		case BAR_METERMODE:
+			//Same as graph mode, continue
+		case GRAPH_METERMODE:
+			break;
+		case TEXT_METERMODE: 
+			// Same as LED mode, continue
+		case LED_METERMODE:
+			break;
+		default:
+			// ???
+			break;
+	}
 }
 
 MeterClass CPUFrequencyMeter_class = {
@@ -54,13 +80,15 @@ MeterClass CPUFrequencyMeter_class = {
 		.delete = Meter_delete
 	},
 	.updateValues = CPUFrequencyMeter_updateValues,
+	.updateMode = CPUFrequencyMeter_updateMode,
 	.defaultMode = TEXT_METERMODE,
-	.maxItems = 1,
-	.total = 100.0,
 	.attributes = CPUFrequencyMeter_attributes,
 	.init = CPUFrequencyMeter_init,
 	.done = CPUFrequencyMeter_done,
-	.name = "CPU Frequency",
+	.draw = CPUFrequencyMeter_draw,
+	.maxItems = 1,
+	.total = 10000.0,
+	.name = "CPU_FREQ",
 	.uiName = "CPU Frequency",
 	.caption = "CPU MHz: "
 };

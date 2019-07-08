@@ -16,6 +16,7 @@ This meter written by Jeremiah B. Lowe
 extern int CPUFrequencyMeter_attributes[];
 
 extern struct CPUInfo* cpu_info;
+float display_mhz, max_mhz;
 
 extern MeterClass CPUFrequencyMeter_class;
 
