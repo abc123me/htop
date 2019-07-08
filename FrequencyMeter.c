@@ -15,6 +15,7 @@ This meter written by Jeremiah B. Lowe
 #include "ProcCPUInfo.h"
 
 #include "CRT.h"
+#include "XAlloc.h"
 
 #include "stdio.h"
 
@@ -45,10 +46,10 @@ static void CPUFrequencyMeter_updateValues(Meter* this, char* buf, int len) {
 	uint8_t res = CPUInfo_readProcfs(cpu_info);
 	if(res == 0) display_mhz = CPUInfo_getAverageFrequencyMHz(cpu_info);
 	else display_mhz = -1;
-	if(display_mhz > max_mhz){
+	if(display_mhz > max_mhz)
 		max_mhz = display_mhz;
-		this->total = (double) max_mhz;
-	}
+	this->total = (double) max_mhz;
+	this->values[0] = (double) mhz;
 		
 	xSnprintf(buf, len - 1, "%.1f", display_mhz);
 }
@@ -58,34 +59,17 @@ static void CPUFrequencyMeter_draw(Meter* this, int x, int y, int w){
 	//xSnprintf(buffer, w - 1, "%.1f", display_mhz);
 }
 
-static void CPUFrequencyMeter_updateMode(Meter* this, int mode){
-	switch(mode){
-		case BAR_METERMODE:
-			//Same as graph mode, continue
-		case GRAPH_METERMODE:
-			break;
-		case TEXT_METERMODE: 
-			// Same as LED mode, continue
-		case LED_METERMODE:
-			break;
-		default:
-			// ???
-			break;
-	}
-}
-
 MeterClass CPUFrequencyMeter_class = {
 	.super = {
 		.extends = Class(Meter),
 		.delete = Meter_delete
 	},
-	.updateValues = CPUFrequencyMeter_updateValues,
-	.updateMode = CPUFrequencyMeter_updateMode,
 	.defaultMode = TEXT_METERMODE,
 	.attributes = CPUFrequencyMeter_attributes,
+	.updateValues = CPUFrequencyMeter_updateValues,
 	.init = CPUFrequencyMeter_init,
 	.done = CPUFrequencyMeter_done,
-	.draw = CPUFrequencyMeter_draw,
+	//.draw = CPUFrequencyMeter_draw,
 	.maxItems = 1,
 	.total = 10000.0,
 	.name = "CPU_FREQ",
