@@ -116,6 +116,7 @@ typedef enum ColorElements_ {
    CPU_SOFTIRQ,
    CPU_STEAL,
    CPU_GUEST,
+   CPU_FREQ,
    LAST_COLORELEMENT
 } ColorElements;
 
