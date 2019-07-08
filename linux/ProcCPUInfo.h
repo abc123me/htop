@@ -3,7 +3,14 @@
 #ifndef HEADER_ProcCPUInfo
 #define HEADER_ProcCPUInfo
 
-#define NULL_STR "(null)"
+#define PROC_FS_CPUINFO "/proc/cpuinfo"
+#define PROC_FS_BUFLEN 512
+#define PROC_FS_LINE_BUFLEN 4096
+#define CPU_INFO_MODEL_MAX_LEN 128
+#define CPU_INFO_VENDOR_MAX_LEN 32
+#define CPU_INFO_NO_MODEL_MSG "No model"
+#define CPU_INFO_NO_VENDOR_MSG "No vendor"
+
 
 #include "stdio.h"
 #include "stdint.h"
@@ -19,18 +26,23 @@ void CoreInfo_init(struct CoreInfo* info);
 struct CPUInfo {
 	uint16_t logical_cores;
 	uint16_t physical_cores;
-	uint16_t coreInfo_len;
 	uint32_t cache_kb;
-	struct CoreInfo* coreInfo;
-	char* vendor;
-	char* model;
+	struct CoreInfo* coreInfo; //Use CPUInfo_getCore(struct CPUInfo* info, uint16_t core) to get a core
+	char vendor[CPU_INFO_VENDOR_MAX_LEN]; 
+	char model[CPU_INFO_MODEL_MAX_LEN];
 };
 void CPUInfo_print(struct CPUInfo* cpu);
 struct CPUInfo* CPUInfo_create();
 void CPUInfo_destroy(struct CPUInfo* info);
-void CPUInfo_setModel(struct CPUInfo* info, char* model);
-void CPUInfo_setVendor(struct CPUInfo* info, char* vendor);
+void CPUInfo_setModel(struct CPUInfo* info, char* str);
+void CPUInfo_setVendor(struct CPUInfo* info, char* str);
 float CPUInfo_getAverageFrequencyMHz(struct CPUInfo* info);
-uint8_t CPUInfo_readProcFile(struct CPUInfo* info, FILE* cpuinfo);
+// CPUInfo_readProcfs
+// 0 - Success
+// 1 - Failed to open /proc/cpuinfo
+// 2 - CPUInfo struct* is null
+// 3 - CPUInfo_getCore returned null?!
+uint8_t CPUInfo_readProcfs(struct CPUInfo* cpu_info);
+struct CoreInfo* CPUInfo_getCore(struct CPUInfo* info, uint16_t core);
 
 #endif
